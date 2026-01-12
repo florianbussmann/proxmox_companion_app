@@ -8,23 +8,50 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:proxmox_companion_app/main.dart';
+import 'package:proxmox_companion_app/ui/home_page.dart';
+
+import 'mocks/mock_proxmox_api.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('HomePage displays nodes, VMs, and LXCs', (
+    WidgetTester tester,
+  ) async {
+    // Build our app
+    await tester.pumpWidget(
+      MaterialApp(
+        home: HomePage(api: MockProxmoxApi('')), // inject the mock
+      ),
+    );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // simulate login
+    await tester.enterText(find.byKey(Key('usernameField')), 'user');
+    await tester.enterText(find.byKey(Key('passwordField')), 'pass');
+    await tester.tap(find.byKey(Key('loginButton')));
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    // Wait for async widgets to load
+    await tester.pumpAndSettle();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Verify HomePage title or key exists
+    expect(find.text('Proxmox Companion'), findsOneWidget);
+
+    // Example: check that at least one node tile is displayed
+    expect(find.byType(ExpansionTile), findsWidgets);
+
+    // expand first node to show VMs and LXCs
+    await tester.tap(find.text('Node: node1'));
+    await tester.pumpAndSettle();
+
+    // Example: check that a VM ListTile exists
+    expect(find.byIcon(Icons.computer), findsWidgets);
+
+    // Example: check that an LXC ListTile exists
+    expect(find.byIcon(Icons.storage), findsWidgets);
+
+    // Optional: tap on first node to expand
+    await tester.tap(find.byType(ExpansionTile).first);
+    await tester.pumpAndSettle();
+
+    // Check that VMs and LXCs appear under the node
+    expect(find.byType(ListTile), findsWidgets);
   });
 }

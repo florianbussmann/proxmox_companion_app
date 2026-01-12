@@ -5,7 +5,9 @@ import '../models/lxc.dart';
 import '../models/vm.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final ProxmoxApi? api; // optional, for testing
+
+  const HomePage({super.key, this.api});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -22,7 +24,8 @@ class _HomePageState extends State<HomePage> {
   bool loggedIn = false;
 
   Future<void> _login() async {
-    final api = ProxmoxApi(apiCtrl.text);
+    final api =
+        widget.api ?? ProxmoxApi(apiCtrl.text); // use injected mock if provided
     await api.login(userCtrl.text, passCtrl.text);
     final rawNodes = await api.getNodes();
     nodes = rawNodes.map((e) => Node.fromJson(e)).toList();
@@ -53,16 +56,22 @@ class _HomePageState extends State<HomePage> {
                 decoration: const InputDecoration(labelText: 'Proxmox Host'),
               ),
               TextField(
+                key: Key('usernameField'),
                 controller: userCtrl,
                 decoration: const InputDecoration(labelText: 'Username'),
               ),
               TextField(
+                key: Key('passwordField'),
                 controller: passCtrl,
                 decoration: const InputDecoration(labelText: 'Password'),
                 obscureText: true,
               ),
               const SizedBox(height: 16),
-              ElevatedButton(onPressed: _login, child: const Text('Login')),
+              ElevatedButton(
+                key: Key('loginButton'),
+                onPressed: _login,
+                child: const Text('Login'),
+              ),
             ],
           ),
         ),
